@@ -93,6 +93,10 @@ vim.g.maplocalleader = ' '
 -- Set to true if you have a Nerd Font installed and selected in the terminal
 vim.g.have_nerd_font = true
 
+-- Disable netrw for oil.nvim to work with 'nvim .'
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
+
 -- [[ Setting options ]]
 -- See `:help vim.opt`
 -- NOTE: You can change these options as you wish!
@@ -176,10 +180,10 @@ vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagn
 vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 
 -- TIP: Disable arrow keys in normal mode
--- vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
--- vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
--- vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
--- vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
+vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
+vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
+vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
+vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
 
 -- Keybinds to make split navigation easier.
 --  Use CTRL+<hjkl> to switch between windows
@@ -909,19 +913,29 @@ require('lazy').setup({
   },
   {
     'stevearc/oil.nvim',
+    priority = 900, -- High priority to load before other plugins
     ---@module 'oil'
     ---@type oil.SetupOpts
-    -- Add keymaps
-    keys = {
-      {
-        '-',
-        function()
-          require('oil').open()
-        end,
-        desc = 'Open parent directory',
-      },
-    },
-    opts = {},
+    -- No lazy loading to ensure it loads when opening directories
+    config = function()
+      require('oil').setup({
+        default_file_explorer = true,
+        view_options = {
+          -- Show files and directories that start with "."
+          show_hidden = true,
+        },
+        keymaps = {
+          ["<C-h>"] = false, -- Disable the default keymap to avoid conflict
+          ["<C-l>"] = false, -- Disable the default keymap to avoid conflict
+          ["<C-j>"] = false, -- Disable the default keymap to avoid conflict
+          ["<C-k>"] = false, -- Disable the default keymap to avoid conflict
+          ["-"] = "actions.parent",
+        },
+      })
+      
+      -- Add global keymap for '-' to open oil in normal mode
+      vim.keymap.set('n', '-', require('oil').open, { desc = 'Open parent directory with oil.nvim' })
+    end,
     -- Optional dependencies
     dependencies = { { 'echasnovski/mini.icons', opts = {} } },
     -- dependencies = { "nvim-tree/nvim-web-devicons" }, -- use if prefer nvim-web-devicons
